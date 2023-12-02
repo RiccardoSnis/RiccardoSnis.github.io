@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html>
+ 
+<head>
+    <title>Frequency Distribution Calculator</title>
+    <style>
+        th {
+            text-align: left;
+        }
+    </style>
+</head>
+ 
+<body>
+    <h1>Frequency Distribution Calculator</h1>
+ 
+    <input type="file" id="fileInput" accept=".tsv" lang="en" />
+    <input type="text" id="variableName" placeholder="Enter variable name" />
+    <input type="number" id="numIntervals" placeholder="Enter number of intervals" />
+    <textarea id="jointVariables" placeholder="Enter joint variables (e.g., Variable1,Variable2,Variable3)"
+        rows="4"></textarea>
+    <button id="calculateButton">Calculate</button>
+ 
+    <table id="resultTable">
+        <!-- Table headers will be added dynamically -->
+    </table>
+ 
+    <script>
+        document.getElementById('calculateButton').addEventListener('click', () => {
+            const fileInput = document.getElementById('fileInput');
+            const variableName = document.getElementById('variableName').value;
+            const numIntervals = parseInt(document.getElementById('numIntervals').value);
+            const jointVariables = document.getElementById('jointVariables').value;
+ 
+            if (fileInput.files.length === 0) {
+                alert('Select a TSV file.');
+                return;
+            }
+ 
+            const file = fileInput.files[0];
+            const reader = new FileReader();
+ 
+            reader.onload = function (event) {
+                const fileContent = event.target.result;
+                const lines = fileContent.split('\n');
+                if (lines.length < 2) {
+                    alert('TSV file without data.');
+                    return;
+                }
+ 
+                const header = lines[0].split('\t');
+ 
+                const jointVariableNames = jointVariables.split(',').map(variable => variable.trim());
+                const variableIndices = {};
+ 
+                for (let i = 0; i < header.length; i++) {
+                    variableIndices[header[i]] = i;
+                }
+ 
+                for (const variableName of jointVariableNames) {
+                    if (!variableIndices.hasOwnProperty(variableName)) {
+                        alert(`Variable '${variableName}' doesnt exist.`);
+                        return;
+                    }
+                }
+ 
+                if (!variableIndices.hasOwnProperty(variableName)) {
+                    alert(`Variable '${variableName}' specified does not exist.`);
+                    return;
+                }
+ 
+                // Joint distribution of variables
+                const jointDistribution = calculateJointDistribution(lines.slice(1), jointVariableNames, variableIndices);
+ 
+                const intervalDistribution = calculateIntervalDistribution(lines.slice(1), variableName, variableIndices, numIntervals);
+                const hardWorkerDistribution = calculateDistribution(lines.slice(1), 'Hard Worker (0-5)', variableIndices);
+                const backgroundDistribution = calculateDistribution(lines.slice(1), 'Background (degree)', variableIndices);
+ 
+                // Calculate and display results in a table
+                displayResults(intervalDistribution, hardWorkerDistribution, backgroundDistribution, jointDistribution);
+            };
+ 
+            reader.readAsText(file);
+        });
+ 
+        function calculateIntervalDistribution(data, variable, variableIndices, numIntervals) {
+            const variableDistribution = {};
+ 
+            for (const row of data) {
+                const rowData = row.split('\t');
+                const value = parseInt(rowData[variableIndices[variable]]);
+ 
+                if (!isNaN(value)) {
+                    const min = Math.min(...data.map(row => parseInt(row.split('\t')[variableIndices[variable]])));
+                    const max = Math.max(...data.map(row => parseInt(row.split('\t')[variableIndices[variable]])));
+                    const intervalWidth = ((max - min) / numIntervals);
+ 
+                    for (let i = 0; i < numIntervals; i++) {
+                        const intervalStart = (min + (i * intervalWidth)).toFixed(2);
+                        const intervalEnd = (min + ((i + 1) * intervalWidth)).toFixed(2);
+                        const key = `${intervalStart}-${intervalEnd}`;
+ 
+                        variableDistribution[key] = 0;
+ 
+                        for (const rowData of data) {
+                            const dataValue = parseInt(rowData.split('\t')[variableIndices[variable]]);
+                            if (!isNaN(dataValue) && dataValue >= intervalStart && dataValue <= intervalEnd) {
+                                variableDistribution[key]++;
+                            }
+                        }
+                    }
+                }
+            }
+            return variableDistribution;
+        }
+ 
+ 
+ 
+        function calculateDistribution(data, variable, variableIndices, intervals = []) {
+            const variableDistribution = {};
+ 
+            for (const row of data) {
+                const rowData = row.split('\t');
+                const value = rowData[variableIndices[variable]];
+ 
+                if (intervals.length > 0) {
+                    for (const interval of intervals) {
+                        const [lower, upper] = interval.split('-').map(value => parseInt(value));
+                        const floatValue = parseInt(value);
+                        if (!isNaN(floatValue) && floatValue >= lower && floatValue <= upper) {
+                            const key = `${lower}-${upper}`;
+                            variableDistribution[key] = (variableDistribution[key] || 0) + 1;
+                        }
+                    }
+                } else {
+                    if (value) {
+                        variableDistribution[value] = (variableDistribution[value] || 0) + 1;
+                    }
+                }
+            }
+            return variableDistribution;
+        }
+ 
+        function calculateJointDistribution(data, variableNames, variableIndices) {
+            const jointDistribution = {};
+ 
+            for (const row of data) {
+                const rowData = row.split('\t');
+                const variables = variableNames.map(variable => rowData[variableIndices[variable]]);
+                const key = variables.join(',');
+ 
+                if (jointDistribution.hasOwnProperty(key)) {
+                    jointDistribution[key]++;
+                } else {
+                    jointDistribution[key] = 1;
+                }
+            }
+ 
+            return jointDistribution;
+        }
+ 
+        function displayResults(intervalDistribution, hardWorkerDistribution, backgroundDistribution, jointDistribution) {
+            const resultTable = document.getElementById('resultTable');
+            resultTable.innerHTML = ''; // Clear the table before populating it
+ 
+            // Create table headers
+            const tableHeaders = ['Variable', 'Value', 'Absolute Distribution', 'Relative Distribution', 'Percentage Distribution'];
+ 
+            // Create header row
+            const thead = resultTable.createTHead();
+            const headerRow = thead.insertRow();
+            tableHeaders.forEach(headerText => {
+                const th = document.createElement('th');
+                th.appendChild(document.createTextNode(headerText));
+                headerRow.appendChild(th);
+            });
+ 
+            // Create a function to add rows to the table
+            function addRow(variable, distribution) {
+                for (const [key, data] of Object.entries(distribution)) {
+                    const row = resultTable.insertRow();
+                    const cellVariable = row.insertCell(0);
+                    const cellValue = row.insertCell(1);
+                    const cellAbsolute = row.insertCell(2);
+                    const cellRelative = row.insertCell(3);
+                    const cellPercentage = row.insertCell(4);
+ 
+                    cellVariable.textContent = variable;
+                    cellValue.textContent = key;
+                    cellAbsolute.textContent = data;
+ 
+                    // Calculate relative distribution and percentage distribution
+                    const total = Object.values(distribution).reduce((sum, value) => sum + value, 0);
+                    const relative = data / total;
+                    cellRelative.textContent = relative.toFixed(2);
+                    cellPercentage.textContent = (relative * 100).toFixed(2) + '%';
+                }
+            }
+ 
+            // Add rows for different distributions
+            addRow('Interval Distribution', intervalDistribution);
+            addRow('Hard Worker (0-5)', hardWorkerDistribution);
+            addRow('Background (degree)', backgroundDistribution);
+            addRow('Joint Distribution', jointDistribution);
+        }
+    </script>
+</body>
+ 
+</html>
