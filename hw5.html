@@ -12,7 +12,7 @@
         body,
         html {
             height: 100%;
-            margin: 20px;
+            margin: 0;
         }
  
         /* Stile per i contenitori dei grafici */
@@ -41,20 +41,16 @@
  
 <body>
     <h1>Chart Simulation</h1>
-    <br>
-    <label for="attacksCount">Number of Attacks:</label>
-    <input type="number" id="attacksCount" value="300">
-    <br>
-    <label for="systemsCount">Number of Systems:</label>
-    <input type="number" id="systemsCount" value="80">
-    <br>
-    <label for="securityScore">Security Score:</label>
-    <input type="number" id="securityScore" value="100">
-    <br>
+    <label for="systemsCount">Systems Count: </label>
+    <input type="number" id="systemsCount" value="500"><br>
+    <label for="subIntervals">Sub-Intervals: </label>
+    <input type="number" id="subIntervals" value="200"><br>
+    <label for="lambda">Lambda: </label>
+    <input type="number" id="lambda" value="20"><br>
     <button id="calculateButton">Calculate</button><br>
  
     <div class="container">
-        <canvas id="chartCanvas" width="1500" height="500"></canvas>
+        <canvas id="chartCanvas" width="800" height="400"></canvas>
     </div>
     <script>
  
@@ -65,19 +61,21 @@
         const chartHeight = chartCanvas.height;
  
  
-        const attacksCountInput = document.getElementById('attacksCount');
+ 
         const systemsCountInput = document.getElementById('systemsCount');
+        const subIntervalsInput = document.getElementById('subIntervals');
+        const lambdaInput = document.getElementById('lambda');
         const calculateButton = document.getElementById('calculateButton');
  
         let systemsCount = parseInt(systemsCountInput.value, 10);
-        let attacksCount = parseInt(attacksCountInput.value, 10);
-        let systemColors = generateRandomColorArray(systemsCount);
+        let subIntervals = parseInt(subIntervalsInput.value, 10);
+        let lambda = parseFloat(lambdaInput.value);
+        let systemColors = [];
  
         calculateButton.addEventListener('click', () => {
             systemsCount = parseInt(systemsCountInput.value, 10);
-            attacksCount = parseInt(attacksCountInput.value, 10);
-            securityScore = parseInt(securityScoreInput.value, 10);
-            penetrationScore = parseInt(penetrationScoreInput.value, 10);
+            subIntervals = parseInt(subIntervalsInput.value, 10);
+            lambda = parseFloat(lambdaInput.value);
             systemColors = generateRandomColorArray(systemsCount)
             calculateScores();
             draw();
@@ -86,14 +84,16 @@
         let scaleX = 50;
         let scaleY = 50;
         let chartX = 0;
-        let chartY = -attacksCount*2;
+        let chartY = 0;
         cartesianZoom = 1.0;
  
         let drawingData = [];
- 
-        let reached = 0;
-        let discardedFirstHalf = 0;
-        let discardedSecondHalf = 0;
+        let firstHalf = 0;
+        let secondHalf = 0;
+        let scoresFirstHalf = 0;
+        let scoresSecondHalf = 0;
+        let scoresHalf = 0;
+        let scoresEnd = 0;
  
  
  
@@ -120,37 +120,65 @@
                 const randomColor = generateRandomColor();
                 randomColors.push(randomColor);
             }
+ 
             return randomColors;
         }
  
+ 
+ 
+ 
         function calculateScores() {
-            securityScores = new Array(systemsCount).fill(0);
             drawingData = new Array(systemsCount).fill();
+            firstHalf = new Array(systemsCount).fill(0);
+            secondHalf = new Array(systemsCount).fill(0);
+            scoresFirstHalf = new Array(subIntervals).fill(0);
+            scoresSecondHalf = new Array(subIntervals).fill(0);
+ 
  
             for (let currentSystem = 0; currentSystem < systemsCount; currentSystem++) {
-                systemData = [{ x: 0, y: 4 }];
-                drawingData[currentSystem] = [...systemData];
+                const systemData = [{ x: 0, y: 0 }];
+                drawingData[currentSystem] = systemData;
  
-                securityScores[currentSystem] = 0;
- 
-                for (let attack = 1; attack <= attacksCount; attack++) {
+                for (let subInterval = 1; subInterval <= subIntervals; subInterval++) {
                     const successProbability = Math.random();
  
-                    if (successProbability > 0.5) {
-                        const precY = drawingData[currentSystem][drawingData[currentSystem].length - 1].y;
-                        drawingData[currentSystem].push({ x: attack, y: precY + 1 });
+                    if (successProbability > (lambda / subIntervals)) {
+                        if (subInterval <= subIntervals / 2) {
+                            firstHalf[currentSystem]++;
+                            secondHalf[currentSystem]++;
+                        } else {
+                            secondHalf[currentSystem]++;
+ 
+                        }
+                        systemData.push({ x: subInterval, y: systemData[systemData.length - 1].y });
+                        systemData.push({ x: subInterval, y: systemData[systemData.length - 1].y + 1 });
                     } else {
-                        securityScores[currentSystem]++;
-                        const precY = drawingData[currentSystem][drawingData[currentSystem].length - 1].y;
-                        drawingData[currentSystem].push({ x: attack, y: precY - 1 });
+                        systemData.push({ x: subInterval, y: systemData[systemData.length - 1].y });
                     }
                 }
             }
+ 
+            for (let subInterval = 1; subInterval <= subIntervals; subInterval++) {
+                for (let currentSystem = 0; currentSystem < systemsCount; currentSystem++) {
+                    if (subInterval - 1 == firstHalf[currentSystem]) {
+                        scoresFirstHalf[subInterval - 1]++;
+                    }
+                    if (subInterval - 1 == secondHalf[currentSystem]) {
+                        scoresSecondHalf[subInterval - 1]++;
+                    }
+                }
+            }
+            scoresHalf = scoresFirstHalf.filter(function (valore, indice, vett) {
+                return valore != 0;
+            });
+            scoresEnd = scoresSecondHalf.filter(function (valore, indice, vett) {
+                return valore != 0;
+            });
         }
  
         function draw() {
  
-            ctx.clearRect(0, 0, chartCanvas.width, chartCanvas.height);
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
  
             const stepX = scaleX * cartesianZoom;
             const stepY = scaleY * cartesianZoom;
@@ -166,9 +194,9 @@
  
                 for (let point = 0; point < drawingData[system].length - 1; point++) {
                     const startX = drawingData[system][point].x * scaleX * cartesianZoom + chartX;
-                    const startY = chartHeight - drawingData[system][point].y * scaleY * cartesianZoom + chartY;
+                    const startY = chartHeight - drawingData[system][point].y * scaleY * cartesianZoom;
                     const endX = drawingData[system][point + 1].x * scaleX * cartesianZoom + chartX;
-                    const endY = chartHeight - drawingData[system][point + 1].y * scaleY * cartesianZoom + chartY;
+                    const endY = chartHeight - drawingData[system][point + 1].y * scaleY * cartesianZoom;
                     ctx.moveTo(startX, startY);
                     ctx.lineTo(endX, endY);
                 }
@@ -183,24 +211,26 @@
  
         function drawHistograms() {
  
-            const barWidth = attacksCount / (5 * systemsCount) * scaleX * cartesianZoom;
+            const barWidth = systemsCount / subIntervals * scaleX * cartesianZoom;
             const initialY = chartHeight;
  
-            ctx.fillStyle = 'rgba(255, 0, 255, 0.8)';
-            for (let i = 0; i < attacksCount / 2; i++) {
-                const barHeight = discardedFirstHalf[i] * scaleY * attacksCount / systemsCount * cartesianZoom;
-                const x = (attacksCount / 2) * scaleX * cartesianZoom + chartX + i * barWidth;
-                const y = initialY + chartY - barHeight;
+            ctx.fillStyle = 'rgba(255, 0, 255, 0.5)';
+            for (let i = 0; i < subIntervals / 2; i++) {
+ 
+                const barHeight = scoresHalf[i] * scaleY * 0.6 * cartesianZoom * 1 * subIntervals * 3 / systemsCount;
+                const x = (subIntervals / 2) * scaleX * cartesianZoom + chartX + i * barWidth;
+                const y = chartHeight - barHeight;
                 ctx.fillRect(x, y, barWidth, barHeight);
  
  
             }
  
-            ctx.fillStyle = 'rgba(0, 0, 255, 0.8)';
-            for (let i = 0; i < attacksCount; i++) {
-                const barHeight = discardedSecondHalf[i] * scaleY * attacksCount / systemsCount * cartesianZoom;
-                const x = (attacksCount) * scaleX * cartesianZoom + chartX + i * barWidth;
-                const y = initialY + chartY - barHeight;
+            ctx.fillStyle = 'rgba(0, 0, 255, 0.5)';
+            for (let i = 0; i < subIntervals; i++) {
+ 
+                const barHeight = scoresEnd[i] * scaleY * cartesianZoom * subIntervals / systemsCount * 3;
+                const x = (subIntervals) * scaleX * cartesianZoom + chartX + i * barWidth;
+                const y = chartHeight - barHeight;
                 ctx.fillRect(x, y, barWidth, barHeight);
  
             }
@@ -239,7 +269,7 @@
         isResizing = false;
     });
  
-    const zoomStep = 0.05;  // Incremento/decremento della scala ad ogni passo di zoom
+    const zoomStep = 0.1;  // Incremento/decremento della scala ad ogni passo di zoom
  
     function handleZoom(event) {
         const zoomCenterX = 0;  // Usa la posizione x dell'angolo in basso a sinistra come centro x
@@ -268,5 +298,5 @@
  
     document.addEventListener('wheel', handleZoom);
 </script>
-
+ 
 </html>
