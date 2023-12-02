@@ -42,9 +42,9 @@
 <body>
     <h1>Chart Simulation</h1>
     <label for="systemsCount">Systems Count: </label>
-    <input type="number" id="systemsCount" value="500"><br>
+    <input type="number" id="systemsCount" value="200"><br>
     <label for="subIntervals">Sub-Intervals: </label>
-    <input type="number" id="subIntervals" value="200"><br>
+    <input type="number" id="subIntervals" value="100"><br>
     <label for="lambda">Lambda: </label>
     <input type="number" id="lambda" value="20"><br>
     <button id="calculateButton">Calculate</button><br>
@@ -53,14 +53,10 @@
         <canvas id="chartCanvas" width="800" height="400"></canvas>
     </div>
     <script>
- 
- 
         const chartCanvas = document.getElementById('chartCanvas');
         const ctx = chartCanvas.getContext('2d');
         const chartWidth = chartCanvas.width;
         const chartHeight = chartCanvas.height;
- 
- 
  
         const systemsCountInput = document.getElementById('systemsCount');
         const subIntervalsInput = document.getElementById('subIntervals');
@@ -95,8 +91,7 @@
         let scoresHalf = 0;
         let scoresEnd = 0;
  
- 
- 
+
         function generateRandomColor() {
             // Generate a random number for the red channel (RR)
             const red = Math.floor(Math.random() * 256);
@@ -108,7 +103,7 @@
             const blue = Math.floor(Math.random() * 256);
  
             // Compose the hexadecimal color
-            const color = `#${red.toString(16)}${green.toString(16)}${blue.toString(16)}`;
+            const color = #${red.toString(16)}${green.toString(16)}${blue.toString(16)};
  
             return color;
         }
@@ -123,9 +118,7 @@
  
             return randomColors;
         }
- 
- 
- 
+
  
         function calculateScores() {
             drawingData = new Array(systemsCount).fill();
@@ -133,7 +126,6 @@
             secondHalf = new Array(systemsCount).fill(0);
             scoresFirstHalf = new Array(subIntervals).fill(0);
             scoresSecondHalf = new Array(subIntervals).fill(0);
- 
  
             for (let currentSystem = 0; currentSystem < systemsCount; currentSystem++) {
                 const systemData = [{ x: 0, y: 0 }];
@@ -178,7 +170,7 @@
  
         function draw() {
  
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.clearRect(0, 0, chartCanvas.width, chartCanvas.height);
  
             const stepX = scaleX * cartesianZoom;
             const stepY = scaleY * cartesianZoom;
@@ -211,34 +203,24 @@
  
         function drawHistograms() {
  
-            const barWidth = systemsCount / subIntervals * scaleX * cartesianZoom;
+            const barWidth = systemsCount / (subIntervals) * scaleX * cartesianZoom;
             const initialY = chartHeight;
  
             ctx.fillStyle = 'rgba(255, 0, 255, 0.5)';
             for (let i = 0; i < subIntervals / 2; i++) {
- 
                 const barHeight = scoresHalf[i] * scaleY * 0.6 * cartesianZoom * 1 * subIntervals * 3 / systemsCount;
                 const x = (subIntervals / 2) * scaleX * cartesianZoom + chartX + i * barWidth;
                 const y = chartHeight - barHeight;
                 ctx.fillRect(x, y, barWidth, barHeight);
- 
- 
             }
- 
             ctx.fillStyle = 'rgba(0, 0, 255, 0.5)';
             for (let i = 0; i < subIntervals; i++) {
- 
                 const barHeight = scoresEnd[i] * scaleY * cartesianZoom * subIntervals / systemsCount * 3;
                 const x = (subIntervals) * scaleX * cartesianZoom + chartX + i * barWidth;
                 const y = chartHeight - barHeight;
                 ctx.fillRect(x, y, barWidth, barHeight);
- 
             }
- 
         }
- 
-        calculateScores();
-        draw();
  
     </script>
 </body>
@@ -269,7 +251,7 @@
         isResizing = false;
     });
  
-    const zoomStep = 0.1;  // Incremento/decremento della scala ad ogni passo di zoom
+    const zoomStep = 0.05;  // Incremento/decremento della scala ad ogni passo di zoom
  
     function handleZoom(event) {
         const zoomCenterX = 0;  // Usa la posizione x dell'angolo in basso a sinistra come centro x
@@ -292,11 +274,14 @@
         context.translate(zoomCenterX, zoomCenterY);
         context.scale(cartesianZoom, cartesianZoom);
         context.translate(-zoomCenterX, -zoomCenterY);
-        draw();  // Chiamata alla tua funzione di disegno
+        if(drawingData.length>0){
+            draw();
+        }
+       
         context.restore();
     }
  
     document.addEventListener('wheel', handleZoom);
 </script>
- 
+ 
 </html>
