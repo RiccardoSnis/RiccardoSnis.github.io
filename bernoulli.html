@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Bernoulli Process Simulation</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      text-align: center;
+      margin: 20px;
+    }
+    canvas {
+      border: 1px solid #000;
+    }
+  </style>
+</head>
+<body>
+
+<h1>Bernoulli Process Simulation</h1>
+<canvas id="simulationCanvas" width="400" height="50"></canvas>
+<br>
+<button onclick="simulateBernoulliProcess()">Simulate</button>
+
+<script>
+function simulateBernoulliProcess() {
+  const canvas = document.getElementById('simulationCanvas');
+  const context = canvas.getContext('2d');
+  const trials = 10; // Number of trials
+  const successProbability = 0.5; // Probability of success (change as needed)
+
+  // Clear canvas
+  context.clearRect(0, 0, canvas.width, canvas.height);
+
+  // Simulate Bernoulli trials and draw on canvas
+  for (let i = 0; i < trials; i++) {
+    const outcome = Math.random() < successProbability ? 1 : 0;
+    const x = i * (canvas.width / trials);
+    const y = outcome * canvas.height;
+
+    // Draw a rectangle representing the outcome
+    context.fillStyle = outcome ? 'green' : 'red';
+    context.fillRect(x, 0, canvas.width / trials, canvas.height);
+  }
+}
+</script>
+
+</body>
+</html>
