@@ -15,8 +15,6 @@
             margin: 20px;
         }
 
-
-
         /* Stile per i contenitori dei grafici */
         .container {
             width: 60%;
@@ -153,7 +151,7 @@
             const blue = Math.floor(Math.random() * 256);
 
             // Compose the hexadecimal color
-            const color =`#${red.toString(16)}${green.toString(16)}${blue.toString(16)}`;
+            const color = `#${red.toString(16)}${green.toString(16)}${blue.toString(16)}`;
 
             return color;
         }
@@ -197,17 +195,19 @@
 
                     if (successProbability > 0.5) {
                         cont++;
+                        
                         // score
                         const precScoreY = drawingScore[currentSystem][drawingScore[currentSystem].length - 1].y;
                         drawingScore[currentSystem].push({ x: attack, y: precScoreY - 1 });
+                        
                         // cumulative freq
                         const precCountY = penetrationCounts[currentSystem][penetrationCounts[currentSystem].length - 1].y;
                         penetrationCounts[currentSystem].push({ x: attack, y: precCountY + 1 })
+                        
                         // relative freq
-                        //const precRelY = penetrationCounts[currentSystem][penetrationCounts[currentSystem].length -1].y;
                         relativeFrequencies[currentSystem].push({ x: attack, y: parseFloat((precCountY + 1) / attack) })
+                        
                         // normalized ratio
-                        //const precNormY = penetrationCounts[currentSystem][penetrationCounts[currentSystem].length -1].y;
                         normalizedRatios[currentSystem].push({ x: attack, y: parseFloat((precCountY + 1) / (Math.sqrt(attack))) })
 
                         if (attack < attacksCount / 2) {
@@ -218,28 +218,14 @@
                         drawingScore[currentSystem].push({ x: attack, y: precScoreY + 1 });
 
                         const precCountY = penetrationCounts[currentSystem][penetrationCounts[currentSystem].length - 1].y;
-                        //penetrationCounts[currentSystem].push({ x: attack, y: precCountY + 1})
-                        // relative freq
-                        //const precRelY = penetrationCounts[currentSystem][penetrationCounts[currentSystem].length -1].y;
                         relativeFrequencies[currentSystem].push({ x: attack, y: parseFloat((precCountY) / attack) })
-                        // normalized ratio
-                        //const precNormY = penetrationCounts[currentSystem][penetrationCounts[currentSystem].length -1].y;
                         normalizedRatios[currentSystem].push({ x: attack, y: parseFloat((precCountY) / (Math.sqrt(attack))) })
                     }
                 }
 
                 /*HISTOGRAMS:*/
-
-                // scores +1 and -1
                 attacksHalf[contHalf]++;
                 attacks[cont]++;
-
-                // cumulative frequency
-
-                // relative frequency
-
-                // normalized ratio
-
 
 
             }
@@ -253,8 +239,6 @@
         }
 
         function draw() {
-
-            //console.log(penetrationCounts[5]);
 
             ctx.clearRect(0, 0, chartCanvas.width, chartCanvas.height);
 
@@ -288,9 +272,9 @@
                 if (selectedSim === "cumulative") {
                     for (let point = 0; point < penetrationCounts[system].length - 1; point++) {
                         const startX = penetrationCounts[system][point].x * scaleX * cartesianZoom + chartX;
-                        const startY = chartHeight / 0.7 - penetrationCounts[system][point].y * scaleY * cartesianZoom + chartY;
+                        const startY = chartHeight * 2 - penetrationCounts[system][point].y * scaleY * cartesianZoom + chartY;
                         const endX = penetrationCounts[system][point + 1].x * scaleX * cartesianZoom + chartX;
-                        const endY = chartHeight / 0.7 - penetrationCounts[system][point + 1].y * scaleY * cartesianZoom + chartY;
+                        const endY = chartHeight * 2 - penetrationCounts[system][point + 1].y * scaleY * cartesianZoom + chartY;
                         ctx.moveTo(startX, startY);
                         ctx.lineTo(endX, endY);
                     }
@@ -301,9 +285,9 @@
                 }
                 if (selectedSim === "relative") {
                     for (let point = 0; point < relativeFrequencies[system].length - 1; point++) {
-                        const startX = relativeFrequencies[system][point].x * 2 * scaleX * cartesianZoom + chartX;
+                        const startX = relativeFrequencies[system][point].x * 0.5 * scaleX * cartesianZoom + chartX;
                         const startY = chartHeight * 2 - relativeFrequencies[system][point].y * 10 * scaleY * cartesianZoom + chartY;
-                        const endX = relativeFrequencies[system][point + 1].x * 2 * scaleX * cartesianZoom + chartX;
+                        const endX = relativeFrequencies[system][point + 1].x * 0.5 * scaleX * cartesianZoom + chartX;
                         const endY = chartHeight * 2 - relativeFrequencies[system][point + 1].y * 10 * scaleY * cartesianZoom + chartY;
                         ctx.moveTo(startX, startY);
                         ctx.lineTo(endX, endY);
@@ -316,10 +300,10 @@
 
                 if (selectedSim === "normalized") {
                     for (let point = 0; point < normalizedRatios[system].length - 1; point++) {
-                        const startX = normalizedRatios[system][point].x * scaleX * 2 * cartesianZoom + chartX;
-                        const startY = chartHeight * 2 - normalizedRatios[system][point].y * 5 * scaleY * cartesianZoom + chartY;
-                        const endX = normalizedRatios[system][point + 1].x * 2 * scaleX * cartesianZoom + chartX;
-                        const endY = chartHeight * 2 - normalizedRatios[system][point + 1].y * 5 * scaleY * cartesianZoom + chartY;
+                        const startX = normalizedRatios[system][point].x * scaleX * 0.5 * cartesianZoom + chartX;
+                        const startY = chartHeight * 2 - normalizedRatios[system][point].y * 10 * scaleY * cartesianZoom + chartY;
+                        const endX = normalizedRatios[system][point + 1].x * 0.5 * scaleX * cartesianZoom + chartX;
+                        const endY = chartHeight * 2 - normalizedRatios[system][point + 1].y * 10 * scaleY * cartesianZoom + chartY;
                         ctx.moveTo(startX, startY);
                         ctx.lineTo(endX, endY);
                     }
@@ -335,25 +319,58 @@
 
         function drawHistograms() {
 
-            const barWidth = attacksCount / (5 * systemsCount) * scaleX * cartesianZoom;
-            const initialY = chartHeight;
+            if (selectedSim === "score" || selectedSim === "cumulative") {
+                const barWidth = attacksCount / (5 * systemsCount) * scaleX * cartesianZoom;
+                let initialY = chartHeight;
+                if(selectedSim === "cumulative") {
+                    initialY*=2;
+                }
 
-            ctx.fillStyle = 'rgba(255, 0, 255, 0.8)';
-            for (let i = 0; i < attacksCount / 2; i++) {
-                const barHeight = attacksHalf[i] * scaleY * attacksCount / systemsCount * cartesianZoom;
-                const x = (attacksCount / 2) * scaleX * cartesianZoom + chartX + i * barWidth;
-                const y = initialY + chartY - barHeight;
-                ctx.fillRect(x, y, barWidth, barHeight);
+                ctx.fillStyle = 'rgba(255, 0, 255, 0.8)';
+                for (let i = 0; i < attacksCount / 2; i++) {
+                    const barHeight = attacksHalf[i] * scaleY * attacksCount / systemsCount * cartesianZoom;
+                    const x = (attacksCount / 2) * scaleX * cartesianZoom + chartX + i * barWidth;
+                    const y = initialY + chartY - barHeight;
+                    ctx.fillRect(x, y, barWidth, barHeight);
+                }
 
+                ctx.fillStyle = 'rgba(0, 0, 255, 0.8)';
+                for (let i = 0; i < attacksCount; i++) {
+                    const barHeight = attacks[i] * scaleY * attacksCount / systemsCount * cartesianZoom;
+                    const x = (attacksCount) * scaleX * cartesianZoom + chartX + i * barWidth;
+                    const y = initialY + chartY - barHeight;
+                    ctx.fillRect(x, y, barWidth, barHeight);
+
+                }
 
             }
 
-            ctx.fillStyle = 'rgba(0, 0, 255, 0.8)';
-            for (let i = 0; i < attacksCount; i++) {
-                const barHeight = attacks[i] * scaleY * attacksCount / systemsCount * cartesianZoom;
-                const x = (attacksCount) * scaleX * cartesianZoom + chartX + i * barWidth;
-                const y = initialY + chartY - barHeight;
-                ctx.fillRect(x, y, barWidth, barHeight);
+            if (selectedSim === "relative" || selectedSim === "normalized") {
+                const barWidth = attacksCount / (5 * systemsCount) * scaleX * cartesianZoom;
+                const initialY = chartHeight*2;
+
+                ctx.fillStyle = 'rgba(255, 0, 255, 0.8)';
+                for (let i = 0; i < attacksCount / 2; i++) {
+                    let barHeight = attacksHalf[i]/(systemsCount) * scaleY * attacksCount / systemsCount * cartesianZoom *30;
+                    if( selectedSim === "normalized"){
+                        barHeight = barHeight * systemsCount / (3*Math.sqrt(systemsCount));
+                    }
+                    const x = (attacksCount / 2) * scaleX * cartesianZoom *0.5 + chartX + i * barWidth;
+                    const y = initialY + chartY - barHeight;
+                    ctx.fillRect(x, y, barWidth, barHeight);
+                }
+
+                ctx.fillStyle = 'rgba(0, 0, 255, 0.8)';
+                for (let i = 0; i < attacksCount; i++) {
+                    let barHeight = attacks[i]/systemsCount * scaleY * attacksCount / systemsCount * cartesianZoom *30;
+                    if( selectedSim === "normalized"){
+                        barHeight = barHeight * systemsCount / (3*Math.sqrt(systemsCount));
+                    }
+                    const x = (attacksCount) * scaleX * cartesianZoom *0.5 + chartX + i * barWidth;
+                    const y = initialY + chartY - barHeight;
+                    ctx.fillRect(x, y, barWidth, barHeight);
+
+                }
 
             }
 
