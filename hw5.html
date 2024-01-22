@@ -134,7 +134,7 @@
                 for (let subInterval = 1; subInterval <= subIntervals; subInterval++) {
                     const successProbability = Math.random();
  
-                    if (successProbability > (lambda / subIntervals)) {
+                    if (successProbability < (lambda / subIntervals)) {
                         if (subInterval <= subIntervals / 2) {
                             firstHalf[currentSystem]++;
                             secondHalf[currentSystem]++;
